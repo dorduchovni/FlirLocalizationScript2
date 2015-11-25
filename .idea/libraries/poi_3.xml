@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="poi-3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../flirloc2/poi-3.13" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="file://$PROJECT_DIR$/../flirloc2/poi-3.13/docs/apidocs" />
+    </JAVADOC>
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/../flirloc2/poi-3.13" recursive="false" />
+  </library>
+</component>
