@@ -1,6 +1,7 @@
-package sample;
+package FlirLocalizationScript2;
 
 
+import org.apache.commons.collections.ArrayStack;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -33,62 +34,7 @@ import static java.nio.file.Paths.get;
 public class Manager {
 
 
-//    public static boolean[] startTranslation(String translations, String strings, String output, String platform) throws IOException {
-//        /** returns array of booleans:
-//         * 0 - LP errors
-//         * 1 - quotation marks errors
-//         * 2 - apostrophe errors
-//         * 3 - additional strings
-//         **/
-//        LinkedHashMap<String, String> translatedStringsMap;
-//        LinkedHashMap<String, String> englishStringsMap;
-//        //sheetToMaps();
-//        String cleanStrings = null;
-//        try {
-//            cleanStrings = cleanStrings(strings, platform);
-//        } catch (ParserConfigurationException e) {
-//            e.printStackTrace();
-//        } catch (SAXException e) {
-//            e.printStackTrace();
-//        }
-//        File stringsFile = new File(cleanStrings);
-//        File translationsFile = new File(translations);
-//        translatedStringsMap = fileToMap(translationsFile, "\t");
-//        englishStringsMap = fileToMap(stringsFile, "\t");
-//
-//        boolean[] results = new boolean[4];
-//        results[0] = lpCheck(translatedStringsMap);
-//        results[1] = quotationMarksCheck(translatedStringsMap);
-//        results[2] = false;
-//        results[3] = false;
-//
-//
-//        if (platform.equals("Android")) {
-//
-//            results[2] = apostropheCheck(translatedStringsMap);
-//
-//            try {
-//                results[3] = androidTranslation(strings, translatedStringsMap, output);
-//            } catch (SAXException e) {
-//                e.printStackTrace();
-//            } catch (ParserConfigurationException e) {
-//                e.printStackTrace();
-//            } catch (TransformerException e) {
-//                e.printStackTrace();
-//            }
-//
-//
-//        } else if (platform.equals("iOS")) {
-//            LinkedHashMap<String, String> finalMapAfterTranslation = translate(translatedStringsMap, englishStringsMap);
-//            results[3] = iosTranslation(finalMapAfterTranslation, translatedStringsMap, englishStringsMap, output);
-//        }
-//
-//        Path path = get(platform + ".tmp");
-//        Files.delete(path);
-//
-//        return results;
-//
-//    }
+    private static ArrayList<String> keysList = new ArrayList<>();
 
     private static boolean iosTranslation(LinkedHashMap<String, String> finalMapAfterTranslation, LinkedHashMap<String, String> translatedMap, LinkedHashMap<String, String> englishStringsMap, String timestamp, String language, String sheetname) throws IOException {
 
@@ -103,6 +49,11 @@ public class Manager {
         if (additionalStringsMap.size() > 0) {
             isAdditional = true;
             writeToExcelFile(additionalStringsMap, timestamp, sheetname,language+ "_ADDITIONAL_STRINGS");
+        }
+
+        LinkedHashMap<String,String> valuesThatWasReplacedWithKeys = replacedTranslationWithKeyCheck(translatedMap);
+        if (valuesThatWasReplacedWithKeys.size()>0) {
+            writeToExcelFile(valuesThatWasReplacedWithKeys,timestamp,sheetname,language+"_VALUES_REPLACED_WITH_KEYS");
         }
 
 
@@ -124,7 +75,7 @@ public class Manager {
             e.printStackTrace();
         }
         File stringsFile = new File(cleanStrings);
-        stringsMap = fileToMap(stringsFile, "\t");
+        stringsMap = platformSourceFileToMap(stringsFile, "\t");
         boolean[] results = new boolean[3];
         results[0] = lpCheck(stringsMap);
         results[1] = quotationMarksCheck(stringsMap);
@@ -140,7 +91,7 @@ public class Manager {
     }
  */
 
-    public static LinkedHashMap fileToMap(File file, String letter) throws IOException {
+    public static LinkedHashMap platformSourceFileToMap(File file, String letter) throws IOException {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line = br.readLine();
@@ -254,12 +205,16 @@ public class Manager {
         LinkedHashMap<String, String> untranslatedStringsMap = untranslatedCheck(translatedStringsMap, englishStringsMap);
         if (untranslatedStringsMap.size() > 0) {
             isAdditional = true;
-            writeToExcelFile(untranslatedStringsMap, timestamp, sheetName,language+"_UNTRANSLATED_STIRNGS");
+            writeToExcelFile(untranslatedStringsMap, timestamp, sheetName,language+"_UNTRANSLATED_STRINGS");
         }
         LinkedHashMap<String, String> additionalStringsMap = additionalCheck(translatedStringsMap, englishStringsMap);
         if (additionalStringsMap.size() > 0) {
             isAdditional = true;
             writeToExcelFile(additionalStringsMap, timestamp, sheetName,language+"_ADDITIONAL_STRINGS");
+        }
+        LinkedHashMap<String,String> valuesThatWasReplacedWithKeys = replacedTranslationWithKeyCheck(translatedStringsMap);
+        if (valuesThatWasReplacedWithKeys.size()>0) {
+            writeToExcelFile(valuesThatWasReplacedWithKeys,timestamp,sheetName,language+"_VALUES_REPLACED_WITH_KEYS");
         }
 
 
@@ -290,6 +245,17 @@ public class Manager {
 
     }
 
+    private static LinkedHashMap<String, String> replacedTranslationWithKeyCheck(LinkedHashMap<String, String> translatedStringsMap) {
+        LinkedHashMap<String, String> replacedTranslations = new LinkedHashMap<>();
+        for (String key : translatedStringsMap.keySet()) {
+            if (keysList.contains(translatedStringsMap.get(key))) {
+                replacedTranslations.put(key,translatedStringsMap.get(key));
+            }
+        }
+        return replacedTranslations;
+
+    }
+
     private static LinkedHashMap<String, String> untranslatedCheck(LinkedHashMap<String, String> translatedStringsMap, Map<String, String> sourceMap) {
         LinkedHashMap<String, String> untranslatedMap = new LinkedHashMap<>();
         for (String engKey : sourceMap.keySet()) {
@@ -308,8 +274,6 @@ public class Manager {
         String path = timestamp+fs+sheetName+fs+language+fs;
         File dir = new File (path);
         dir.mkdirs();
-      //  File outputFile = new File(timestamp+"\\"+sheetName+"\\"+language);
-        //outputFile.mkdirs();
 
         FileWriter fw = new FileWriter(new File(dir, "Strings table.txt"));
 
@@ -488,11 +452,49 @@ public class Manager {
             }
             sheetsAndLanguagesMap.put(sheet.getSheetName(), languagesList);
         }
+
+
+
+        Row row;
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            int keyIndex=0;
+            XSSFSheet sheet = workbook.getSheetAt(i);
+            Iterator<Row> rowIterator = sheet.rowIterator();
+            Iterator<Cell> firstRowIterator = sheet.getRow(0).cellIterator();
+
+            //searching for key index
+            while (firstRowIterator.hasNext()) {
+                Cell cell = firstRowIterator.next();
+                if (!cell.isPartOfArrayFormulaGroup() && cell.getStringCellValue().equals("Key")) {
+                    keyIndex = cell.getColumnIndex();
+                    break;
+                }
+            }
+            if (rowIterator.hasNext()) {
+                row = rowIterator.next();
+            }
+            while (rowIterator.hasNext()) {
+                row = rowIterator.next();
+                //For each row, iterate through all the columns
+                Iterator<Cell> cellIterator = row.cellIterator();
+                if (row.getCell(keyIndex) != null) {
+                    String key = row.getCell(keyIndex).getStringCellValue();
+                    if (!key.equals("")) {
+                        keysList.add(key);
+                    }
+                }
+            }
+        }
+
+
+
+
+
         return sheetsAndLanguagesMap;
     }
 
     public static void translateSheetsMap(Map<String, SheetToTranslate> sheetToTranslateMap, String excelFile) throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(Calendar.getInstance().getTime());
         for (String sheet : sheetToTranslateMap.keySet()) {
             SheetToTranslate sheetToTranslate = sheetToTranslateMap.get(sheet);
             LinkedHashMap<String, LinkedHashMap<String, String>> mapOfTranslationsForSheet = sheetToMaps(excelFile, sheet, sheetToTranslate.languages);
@@ -515,21 +517,14 @@ public class Manager {
                 e.printStackTrace();
             }
             File stringsFile = new File(cleanStrings);
-            englishStringsMap = fileToMap(stringsFile, "\t");
-
-            boolean[] results = new boolean[4];
-            results[0] = lpCheck(translatedStringsMap);
-            results[1] = quotationMarksCheck(translatedStringsMap);
-            results[2] = false;
-            results[3] = false;
-
+            englishStringsMap = platformSourceFileToMap(stringsFile, "\t");
+            lpCheck(translatedStringsMap);
+            quotationMarksCheck(translatedStringsMap);
 
             if (platform.equals("Android")) {
-
-                results[2] = apostropheCheck(translatedStringsMap);
-
+                apostropheCheck(translatedStringsMap);
                 try {
-                    results[3] = androidTranslation(sourceFileName, translatedStringsMap, timeStamp,language,sheetname);
+                    androidTranslation(sourceFileName, translatedStringsMap, timeStamp,language,sheetname);
                 } catch (SAXException e) {
                     e.printStackTrace();
                 } catch (ParserConfigurationException e) {
@@ -538,10 +533,9 @@ public class Manager {
                     e.printStackTrace();
                 }
 
-
             } else if (platform.equals("iOS")) {
                 LinkedHashMap<String, String> finalMapAfterTranslation = translate(translatedStringsMap, englishStringsMap);
-                results[3] = iosTranslation(finalMapAfterTranslation, translatedStringsMap, englishStringsMap, timeStamp,language,sheetname);
+                iosTranslation(finalMapAfterTranslation, translatedStringsMap, englishStringsMap, timeStamp,language,sheetname);
             }
 
             Path path = get(platform + ".tmp");
@@ -553,16 +547,15 @@ public class Manager {
         }
     }
 
-
     public static LinkedHashMap<String, LinkedHashMap<String, String>> sheetToMaps(String filename, String sheetName, List<String> languagesList) throws IOException {
 
-        FileInputStream file = new FileInputStream(new File(filename)); //TODO: change to filenmae
+        FileInputStream file = new FileInputStream(new File(filename));
 
         //Create Workbook instance holding reference to .xlsx file
         XSSFWorkbook workbook = new XSSFWorkbook(file);
 
         //Get first/desired sheet from the workbook
-        XSSFSheet sheet = workbook.getSheet(sheetName); // // TODO: change to sheetNAme
+        XSSFSheet sheet = workbook.getSheet(sheetName);
         LinkedHashMap<String, Integer> languagesIndex = new LinkedHashMap<>();
         Iterator<Row> rowIterator = sheet.rowIterator();
         Row row = rowIterator.next();
@@ -578,12 +571,6 @@ public class Manager {
                     languagesIndex.put(language, cell.getColumnIndex());
                 }
             }
-
-
-//            if ((!cell.isPartOfArrayFormulaGroup()) && (cell.getStringCellValue().contains("@") || cell.getStringCellValue().contains("Key"))&&(languagesList.contains(cell.getStringCellValue()) || cell.getStringCellValue().contains("Key"))) {
-//                String language = cell.getStringCellValue().replaceAll("@", "");
-//                languagesIndex.put(language, cell.getColumnIndex());
-//            }
         }
 
         LinkedHashMap<String, LinkedHashMap<String, String>> translationsMap = new LinkedHashMap<>();
@@ -592,23 +579,22 @@ public class Manager {
                 translationsMap.put(key, new LinkedHashMap<String, String>());
             }
         }
-        int rownum = 0;
         while (rowIterator.hasNext()) {
-            rownum++;
             row = rowIterator.next();
             //For each row, iterate through all the columns
             Iterator<Cell> cellIterator = row.cellIterator();
-          //  System.out.println(rownum);
-            String key = row.getCell(languagesIndex.get("Key")).getStringCellValue();
-            while (cellIterator.hasNext()) {
-                Cell cell = cellIterator.next();
-                if (!sheet.getRow(0).getCell(cell.getColumnIndex()).isPartOfArrayFormulaGroup()) {
-                    String language = sheet.getRow(0).getCell(cell.getColumnIndex()).getStringCellValue().replaceAll("@", "");
-                    if (languagesIndex.containsKey(language) && !language.equals("Key")) {
-                        String value = row.getCell(languagesIndex.get(language)).getStringCellValue();
-                        translationsMap.get(language).put(key, value);
-                    }
+            if (row.getCell(languagesIndex.get("Key"))!= null) {
+                String key = row.getCell(languagesIndex.get("Key")).getStringCellValue();
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                    if (!sheet.getRow(0).getCell(cell.getColumnIndex()).isPartOfArrayFormulaGroup()) {
+                        String language = sheet.getRow(0).getCell(cell.getColumnIndex()).getStringCellValue().replaceAll("@", "");
+                        if (languagesIndex.containsKey(language) && !language.equals("Key")) {
+                            String value = row.getCell(languagesIndex.get(language)).getStringCellValue();
+                            translationsMap.get(language).put(key, value);
+                        }
 
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-package sample;
+package FlirLocalizationScript2;
 
 import java.util.List;
 
