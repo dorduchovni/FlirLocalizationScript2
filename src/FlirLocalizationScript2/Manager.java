@@ -34,20 +34,17 @@ import static java.nio.file.Paths.get;
 public class Manager {
 
 
-    private static ArrayList<String> keysList = new ArrayList<>();
+    private  ArrayList<String> keysList = new ArrayList<>();
+    private String directory;
 
-    private static boolean iosTranslation(LinkedHashMap<String, String> finalMapAfterTranslation, LinkedHashMap<String, String> translatedMap, LinkedHashMap<String, String> englishStringsMap, String timestamp, String language, String sheetname) throws IOException {
-
-        boolean isAdditional = false;
+    private void iosTranslation(LinkedHashMap<String, String> finalMapAfterTranslation, LinkedHashMap<String, String> translatedMap, LinkedHashMap<String, String> englishStringsMap, String timestamp, String language, String sheetname) throws IOException {
 
         LinkedHashMap<String, String> untranslatedStringsMap = untranslatedCheck(translatedMap, englishStringsMap);
         if (untranslatedStringsMap.size() > 0) {
-            isAdditional = true;
             writeToExcelFile(untranslatedStringsMap,  timestamp, sheetname,language+"_UNTRANSLATED_STIRNGS");
         }
         LinkedHashMap<String, String> additionalStringsMap = additionalCheck(translatedMap, englishStringsMap);
         if (additionalStringsMap.size() > 0) {
-            isAdditional = true;
             writeToExcelFile(additionalStringsMap, timestamp, sheetname,language+ "_ADDITIONAL_STRINGS");
         }
 
@@ -58,8 +55,6 @@ public class Manager {
 
 
         writeToIosStringFile(finalMapAfterTranslation, timestamp,sheetname,language);
-
-        return isAdditional;
 
 
     }
@@ -91,7 +86,7 @@ public class Manager {
     }
  */
 
-    public static LinkedHashMap platformSourceFileToMap(File file, String letter) throws IOException {
+    public LinkedHashMap platformSourceFileToMap(File file, String letter) throws IOException {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line = br.readLine();
@@ -126,14 +121,12 @@ public class Manager {
         return map;
     }
 
-    public static void writeToIosStringFile(Map<String, String> map, String timestamp, String sheetname, String language) throws IOException {
+    public void writeToIosStringFile(Map<String, String> map, String timestamp, String sheetname, String language) throws IOException {
 
         String fs = System.getProperty("file.separator");
-        String path = timestamp+fs+sheetname+fs+language+fs;
+        String path = directory+fs+timestamp+fs+sheetname+fs+language+fs;
         File dir = new File (path);
         dir.mkdirs();
-        //File file = new File(timestamp+"\\"+sheetname+"\\"+language);
-        //file.getParentFile().mkdirs();
         FileWriter fw = new FileWriter(new File(dir, "StringsForUI.strings"));
 
         fw.write("/*\n" +
@@ -150,13 +143,11 @@ public class Manager {
 
     }
 
-    public static boolean androidTranslation(String file, LinkedHashMap<String, String> translatedStringsMap, String timestamp, String language, String sheetName) throws IOException, SAXException, ParserConfigurationException, TransformerException {
+    public void androidTranslation(String file, LinkedHashMap<String, String> translatedStringsMap, String timestamp, String language, String sheetName) throws IOException, SAXException, ParserConfigurationException, TransformerException {
         String fs = System.getProperty("file.separator");
-        String path = timestamp+fs+sheetName+fs+language+fs;
+        String path = directory+fs+timestamp+fs+sheetName+fs+language+fs;
         File dir = new File (path);
         dir.mkdirs();
-        //File outputFile = new File(timestamp+"\\"+sheetName+"\\"+language);
-        //outputFile.getParentFile().mkdirs();
         LinkedHashMap<String, String> englishStringsMap = new LinkedHashMap<>();
 
 
@@ -200,16 +191,12 @@ public class Manager {
 
         }
 
-        boolean isAdditional = false;
-
         LinkedHashMap<String, String> untranslatedStringsMap = untranslatedCheck(translatedStringsMap, englishStringsMap);
         if (untranslatedStringsMap.size() > 0) {
-            isAdditional = true;
             writeToExcelFile(untranslatedStringsMap, timestamp, sheetName,language+"_UNTRANSLATED_STRINGS");
         }
         LinkedHashMap<String, String> additionalStringsMap = additionalCheck(translatedStringsMap, englishStringsMap);
         if (additionalStringsMap.size() > 0) {
-            isAdditional = true;
             writeToExcelFile(additionalStringsMap, timestamp, sheetName,language+"_ADDITIONAL_STRINGS");
         }
         LinkedHashMap<String,String> valuesThatWasReplacedWithKeys = replacedTranslationWithKeyCheck(translatedStringsMap);
@@ -227,12 +214,10 @@ public class Manager {
         StreamResult result = new StreamResult(new File(dir, "strings.xml"));
         transformer.transform(source, result);
 
-        return isAdditional;
-
 
     }
 
-    private static LinkedHashMap<String, String> additionalCheck(LinkedHashMap<String, String> translatedStringsMap, Map<String, String> sourceMap) {
+    private  LinkedHashMap<String, String> additionalCheck(LinkedHashMap<String, String> translatedStringsMap, Map<String, String> sourceMap) {
         LinkedHashMap<String, String> additionalMap = new LinkedHashMap<>();
         for (String translatedKey : translatedStringsMap.keySet()) {
             if (!translatedKey.equals("")) {
@@ -245,10 +230,11 @@ public class Manager {
 
     }
 
-    private static LinkedHashMap<String, String> replacedTranslationWithKeyCheck(LinkedHashMap<String, String> translatedStringsMap) {
+    private  LinkedHashMap<String, String> replacedTranslationWithKeyCheck(LinkedHashMap<String, String> translatedStringsMap) {
         LinkedHashMap<String, String> replacedTranslations = new LinkedHashMap<>();
         for (String key : translatedStringsMap.keySet()) {
             if (keysList.contains(translatedStringsMap.get(key))) {
+
                 replacedTranslations.put(key,translatedStringsMap.get(key));
             }
         }
@@ -256,7 +242,7 @@ public class Manager {
 
     }
 
-    private static LinkedHashMap<String, String> untranslatedCheck(LinkedHashMap<String, String> translatedStringsMap, Map<String, String> sourceMap) {
+    private LinkedHashMap<String, String> untranslatedCheck(LinkedHashMap<String, String> translatedStringsMap, Map<String, String> sourceMap) {
         LinkedHashMap<String, String> untranslatedMap = new LinkedHashMap<>();
         for (String engKey : sourceMap.keySet()) {
             if (!engKey.equals("")) {
@@ -269,9 +255,9 @@ public class Manager {
 
     }
 
-    public static void writeToExcelFile(Map<String, String> map, String timestamp, String sheetName, String language) throws IOException {
+    public void writeToExcelFile(Map<String, String> map, String timestamp, String sheetName, String language) throws IOException {
         String fs = System.getProperty("file.separator");
-        String path = timestamp+fs+sheetName+fs+language+fs;
+        String path = directory+fs+timestamp+fs+sheetName+fs+language+fs;
         File dir = new File (path);
         dir.mkdirs();
 
@@ -285,7 +271,7 @@ public class Manager {
 
     }
 
-    public static LinkedHashMap translate(Map<String, String> translatedStringsMap, Map<String, String> englishStringsMap) {
+    public LinkedHashMap translate(Map<String, String> translatedStringsMap, Map<String, String> englishStringsMap) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>(englishStringsMap);
         for (String key : translatedStringsMap.keySet()) {
             if (result.containsKey(key)) {
@@ -299,24 +285,20 @@ public class Manager {
         return result;
     }
 
-    public static boolean lpCheck(Map<String, String> map) {
+    public void lpCheck(Map<String, String> map) {
         String[] lpToCheck = new String[]{"LP：", "LP: ", "LP:"};
-        boolean result = false;
         for (String lp : lpToCheck) {
             for (String key : map.keySet()) {
                 String value = map.get(key);
                 if (value.contains(lp)) {
                     String newValue = value.substring(0, value.indexOf(lp)) + value.substring(lp.length(), value.length());
                     map.put(key, newValue);
-                    result = true;
                 }
             }
         }
-        return result;
     }
 
-    public static boolean quotationMarksCheck(Map<String, String> map) {
-        boolean result = false;
+    public void quotationMarksCheck(Map<String, String> map) {
         for (String key : map.keySet()) {
             String value = map.get(key);
             String[] valueArr = value.split("\"");
@@ -326,7 +308,6 @@ public class Manager {
                     newValue = newValue + valueArr[j];
                     if (!valueArr[j].endsWith("\\")) {
                         newValue = newValue + "\\" + "\"";
-                        result = true;
                     } else {
                         newValue = newValue + "\"";
                     }
@@ -339,11 +320,9 @@ public class Manager {
                 map.put(key, newValue);
             }
         }
-        return result;
     }
 
-    public static boolean apostropheCheck(Map<String, String> map) {
-        boolean result = false;
+    public void apostropheCheck(Map<String, String> map) {
         for (String key : map.keySet()) {
             String value = map.get(key);
             String[] valueArr = value.split("\'");
@@ -353,7 +332,6 @@ public class Manager {
                     newValue = newValue + valueArr[j];
                     if (!valueArr[j].endsWith("\\")) {
                         newValue = newValue + "\\" + "\'";
-                        result = true;
                     } else {
                         newValue = newValue + "\'";
                     }
@@ -367,10 +345,9 @@ public class Manager {
             }
 
         }
-        return result;
     }
 
-    public static String cleanStrings(String file, String platform) throws IOException, ParserConfigurationException, SAXException {
+    public String cleanStrings(String file, String platform) throws IOException, ParserConfigurationException, SAXException {
         if (platform.equals("iOS")) {
             FileWriter fw = new FileWriter("ios.tmp");
             BufferedReader br = new BufferedReader(new FileReader(file));
@@ -435,7 +412,7 @@ public class Manager {
 
     }
 
-    public static LinkedHashMap<String, List<String>> getSheetsAndLanguages(String filename) throws IOException {
+    public LinkedHashMap<String, List<String>> getSheetsAndLanguages(String filename) throws IOException {
         LinkedHashMap<String, List<String>> sheetsAndLanguagesMap = new LinkedHashMap<>();
         FileInputStream file = new FileInputStream(new File(filename));
         XSSFWorkbook workbook = new XSSFWorkbook(file);
@@ -493,8 +470,9 @@ public class Manager {
         return sheetsAndLanguagesMap;
     }
 
-    public static void translateSheetsMap(Map<String, SheetToTranslate> sheetToTranslateMap, String excelFile) throws IOException {
+    public void translateSheetsMap(Map<String, SheetToTranslate> sheetToTranslateMap, String excelFile,String selectedDirectory) throws IOException {
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(Calendar.getInstance().getTime());
+        directory = selectedDirectory;
         for (String sheet : sheetToTranslateMap.keySet()) {
             SheetToTranslate sheetToTranslate = sheetToTranslateMap.get(sheet);
             LinkedHashMap<String, LinkedHashMap<String, String>> mapOfTranslationsForSheet = sheetToMaps(excelFile, sheet, sheetToTranslate.languages);
@@ -503,7 +481,7 @@ public class Manager {
 
     }
 
-    private static void translateEachLanguage(LinkedHashMap<String, LinkedHashMap<String, String>> mapOfTranslationsForSheet, String sourceFileName, String platform, String timeStamp, String sheetname) throws IOException {
+    private void translateEachLanguage(LinkedHashMap<String, LinkedHashMap<String, String>> mapOfTranslationsForSheet, String sourceFileName, String platform, String timeStamp, String sheetname) throws IOException {
 
         for (String language : mapOfTranslationsForSheet.keySet()) {
             LinkedHashMap<String, String> translatedStringsMap = mapOfTranslationsForSheet.get(language);
@@ -547,7 +525,7 @@ public class Manager {
         }
     }
 
-    public static LinkedHashMap<String, LinkedHashMap<String, String>> sheetToMaps(String filename, String sheetName, List<String> languagesList) throws IOException {
+    public LinkedHashMap<String, LinkedHashMap<String, String>> sheetToMaps(String filename, String sheetName, List<String> languagesList) throws IOException {
 
         FileInputStream file = new FileInputStream(new File(filename));
 

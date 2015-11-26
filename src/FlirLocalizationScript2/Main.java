@@ -13,8 +13,11 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.poi.hwpf.model.Sttb;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +26,7 @@ import java.util.List;
 
 public class Main extends Application {
     private String filepath;
+    private String selectedDirectoryPath;
     private Map<String,SheetToTranslate> sheetToTranslateMap = new LinkedHashMap<>();
 
     @Override
@@ -31,7 +35,7 @@ public class Main extends Application {
         primaryStage.setTitle("Localization");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
-
+        Manager manager = new Manager();
         FlowPane flowPane =(FlowPane) ((AnchorPane)((ScrollPane)root.getChildrenUnmodifiable().get(0)).getContent()).getChildren().get(0);
         Button browseBtn = (Button) (flowPane).lookup("#browseBtn") ;
         Button startBtn = (Button) (flowPane).lookup("#startBtn");
@@ -60,7 +64,8 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event) {
                 try {
-                    LinkedHashMap<String, java.util.List<String>> sheetsAndLanguages = Manager.getSheetsAndLanguages(filepath);
+
+                    LinkedHashMap<String, java.util.List<String>> sheetsAndLanguages = manager.getSheetsAndLanguages(filepath);
                     for (String sheet: sheetsAndLanguages.keySet()) {
                         sheetToTranslateMap.put(sheet,new SheetToTranslate());
                         sheetToTranslateMap.get(sheet).languages = new ArrayList<String>();
@@ -68,11 +73,15 @@ public class Main extends Application {
                     for (String sheet: sheetsAndLanguages.keySet()) {
                         sheetsAndLanguagesUI(sheet, sheetsAndLanguages.get(sheet),flowPane, primaryStage);
                     }
-            //        primaryStage.setMaximized(true);
-              //      primaryStage.setResizable(true);
-
 
                     startBtn.setDisable(true);
+                    ScrollPane sp = new ScrollPane();
+                    GridPane pane = new GridPane();
+                    Label whereToSaveLabel= new Label("Choose where to save the files");
+                    pane.add(whereToSaveLabel,0,0);
+                    TextField whereToSavePath = new TextField();
+                    pane.add(whereToSavePath,0,1);
+                    Button selectDirectoryBtn = new Button("Browse");
                     Button translateBtn = new Button("Translate");
                     translateBtn.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
@@ -87,7 +96,7 @@ public class Main extends Application {
                                     }
                                 }
                                 try {
-                                    Manager.translateSheetsMap(sendToManager,filepath);
+                                    manager.translateSheetsMap(sendToManager,filepath,selectedDirectoryPath);
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -104,7 +113,32 @@ public class Main extends Application {
                             }
                         }
                     });
-                    flowPane.getChildren().add(translateBtn);
+                    selectDirectoryBtn.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            DirectoryChooser chooser = new DirectoryChooser();
+                            chooser.setTitle("Choose where to save");
+                            File selectedDirectory = chooser.showDialog(primaryStage);
+                            selectedDirectoryPath = selectedDirectory.getPath();
+                            whereToSavePath.setText(selectedDirectory.getPath());
+                            translateBtn.setDisable(false);
+                        }
+                    });
+                    translateBtn.setDisable(true);
+                    pane.add(selectDirectoryBtn,1,1);
+                    pane.add(translateBtn,1,2);
+                    sp.setContent(pane);
+                    sp.setFitToHeight(true);
+                    sp.setFitToWidth(true);
+                    flowPane.getChildren().add(sp);
+
+
+
+
+
+
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
