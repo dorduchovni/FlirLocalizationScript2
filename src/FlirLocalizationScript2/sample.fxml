@@ -10,23 +10,42 @@
 
 <GridPane alignment="center" hgap="10" prefHeight="576.0" prefWidth="800.0" vgap="10" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="FlirLocalizationScript2.Controller">
    <children>
-      <ScrollPane prefHeight="574.0" prefWidth="800.0">
-        <content>
-          <AnchorPane fx:id="anchor" minHeight="0.0" minWidth="0.0" prefHeight="1500.0" prefWidth="800.0">
-               <children>
-                  <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" layoutX="1.0" layoutY="1.0" prefHeight="54.0" prefWidth="800">
+      <TabPane prefHeight="581.0" prefWidth="794.0" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <Tab fx:id="translateTab" text="Translate">
+               <content>
+                  <ScrollPane fx:id="scrollPane" prefHeight="343.0" prefWidth="455.0">
+                    <content>
+                      <AnchorPane fx:id="anchor" minHeight="0.0" minWidth="0.0" prefHeight="1500.0" prefWidth="800.0">
+                           <children>
+                              <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" layoutX="1.0" layoutY="1.0" prefHeight="54.0" prefWidth="800">
+                                 <children>
+                                    <Label fx:id="translationsLabel" text="Enter the translation XSL file path: " textAlignment="CENTER" />
+                                    <TextField fx:id="filepathTextView" prefHeight="26.0" prefWidth="201.0" />
+                                    <Button fx:id="browseBtn" alignment="CENTER" mnemonicParsing="false" text="Browse" />
+                                    <Button fx:id="startBtn" alignment="CENTER" mnemonicParsing="false" text="Start" />
+                                    <Button fx:id="resetBtn" mnemonicParsing="false" text="Reset" />
+                                 </children>
+                              </FlowPane>
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </ScrollPane>
+               </content>
+            </Tab>
+          <Tab fx:id="toExcelTab" text="To Excel">
+               <content>
+                  <FlowPane alignment="TOP_CENTER" prefHeight="200.0" prefWidth="200.0">
                      <children>
-                        <Label fx:id="translationsLabel" text="Enter the translation XSL file path: " textAlignment="CENTER" />
-                        <TextField fx:id="filepathTextView" prefHeight="26.0" prefWidth="201.0" />
-                        <Button fx:id="browseBtn" alignment="CENTER" mnemonicParsing="false" text="Browse" />
-                        <Button fx:id="startBtn" alignment="CENTER" mnemonicParsing="false" text="Start" />
-                        <Button fx:id="resetBtn" mnemonicParsing="false" text="Reset" />
+                        <Label fx:id="exportLabel" text="Choose file to export" />
+                        <TextField fx:id="exportFilePath" />
+                        <Button fx:id="exportBrowseBtn" mnemonicParsing="false" text="Browse" />
                      </children>
                   </FlowPane>
-               </children>
-            </AnchorPane>
-        </content>
-      </ScrollPane>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
    </children>
    <columnConstraints>
       <ColumnConstraints />

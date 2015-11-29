@@ -35,7 +35,7 @@ public class Manager {
 
 
     private  ArrayList<String> keysList = new ArrayList<>();
-    private String directory;
+    public String directory;
 
     private void iosTranslation(LinkedHashMap<String, String> finalMapAfterTranslation, LinkedHashMap<String, String> translatedMap, LinkedHashMap<String, String> englishStringsMap, String timestamp, String language, String sheetname) throws IOException {
 
@@ -58,8 +58,8 @@ public class Manager {
 
 
     }
-/**
-    public static boolean[] sourceToExcel(String strings, String output, String platform) throws IOException {
+
+    public void sourceToExcel(String strings, String platform) throws IOException {
         LinkedHashMap<String, String> stringsMap;
         String cleanStrings = null;
         try {
@@ -71,20 +71,19 @@ public class Manager {
         }
         File stringsFile = new File(cleanStrings);
         stringsMap = platformSourceFileToMap(stringsFile, "\t");
-        boolean[] results = new boolean[3];
-        results[0] = lpCheck(stringsMap);
-        results[1] = quotationMarksCheck(stringsMap);
-        results[2] = false;
+
+        lpCheck(stringsMap);
+        quotationMarksCheck(stringsMap);
+
 
         if (platform.equals("Android")) {
-            results[2] = apostropheCheck(stringsMap);
+            apostropheCheck(stringsMap);
         }
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(Calendar.getInstance().getTime());
+        writeToExcelFile(stringsMap,timeStamp,"Excel",platform);
 
-        writeToExcelFile(stringsMap, output);
-
-        return results;
     }
- */
+
 
     public LinkedHashMap platformSourceFileToMap(File file, String letter) throws IOException {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();

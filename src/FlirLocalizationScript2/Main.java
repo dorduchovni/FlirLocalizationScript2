@@ -28,6 +28,7 @@ public class Main extends Application {
     private String filepath;
     private String selectedDirectoryPath;
     private Map<String,SheetToTranslate> sheetToTranslateMap = new LinkedHashMap<>();
+    private String toExcelSource;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -36,15 +37,100 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
         Manager manager = new Manager();
-        FlowPane flowPane =(FlowPane) ((AnchorPane)((ScrollPane)root.getChildrenUnmodifiable().get(0)).getContent()).getChildren().get(0);
-        Button browseBtn = (Button) (flowPane).lookup("#browseBtn") ;
-        Button startBtn = (Button) (flowPane).lookup("#startBtn");
-        Button resetBtn = (Button) (flowPane).lookup("#resetBtn");
-        javafx.scene.control.TextField browseTextfield = (TextField) (flowPane).lookup("#filepathTextView");
+        FlowPane translateFlowPane =(FlowPane) (((AnchorPane)(((ScrollPane) ((TabPane)root.getChildrenUnmodifiable().get(0)).getTabs().get(0).getContent()).getContent())).getChildren().get(0));
+        FlowPane exportToExcelFlowPane = (FlowPane) (((TabPane)root.getChildrenUnmodifiable().get(0)).getTabs().get(1).getContent());
+        Button exportBrowseBtn = (Button) (exportToExcelFlowPane.lookup("#exportBrowseBtn"));
+        TextField exportTextField = (TextField) (exportToExcelFlowPane.lookup("#exportFilePath"));
+        exportBrowseBtn.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                final String[] platform = new String[1];
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Open Resource File");
+                File file = fileChooser.showOpenDialog(primaryStage);
+                if (file != null) {
+                    toExcelSource = file.getPath();
+                    exportTextField.setText(toExcelSource);
+                    GridPane pane = new GridPane();
+                    Label platformLabel = new Label("Select Platform: ");
+                    pane.add(platformLabel,0,0);
+                    RadioButton platformIos = new RadioButton("iOS");
+                    RadioButton platformAndroid = new RadioButton("Android");
+                    final ToggleGroup group = new ToggleGroup();
+                    platformIos.setToggleGroup(group);
+                    platformAndroid.setToggleGroup(group);
+                    platformIos.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            if (platformIos.isSelected()) {
+                                platform[0] = "iOS";
+                                platformAndroid.setSelected(false);
+                            }
+                        }
+                    });
+                    platformAndroid.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            if (platformAndroid.isSelected()){
+                                platform[0] = "Android";
+                                platformIos.setSelected(false);
+                            }
+                        }
+                    });
+                    pane.add(platformIos,0,1);
+                    pane.add(platformAndroid,1,1);
+                    Label savePath = new Label("Where to save it?");
+                    pane.add(savePath,0,2);
+                    TextField savePathTextField = new TextField();
+                    pane.add(savePathTextField,0,3);
+                    Button saveBtn = new Button("Browse");
+                    Button exportBtn = new Button("Export");
+                    exportBtn.setDisable(true);
+                    saveBtn.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            DirectoryChooser chooser = new DirectoryChooser();
+                            chooser.setTitle("Choose where to save");
+                            File selectedDirectory = chooser.showDialog(primaryStage);
+                            selectedDirectoryPath = selectedDirectory.getPath();
+                            savePathTextField.setText(selectedDirectory.getPath());
+                            exportBtn.setDisable(false);
+                        }
+                    });
+                    exportBtn.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            manager.directory = selectedDirectoryPath;
+                            try {
+                                manager.sourceToExcel(toExcelSource,platform[0]);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Export finished");
+                            alert.setContentText("Export finished successfully");
+                            alert.showAndWait();
+                            try {
+                                start(primaryStage);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    pane.add(saveBtn,1,3);
+                    pane.add(exportBtn,0,4);
+                    exportToExcelFlowPane.getChildren().add(pane);
+                }
+            }
+        });
+        Button browseBtn = (Button) (translateFlowPane).lookup("#browseBtn") ;
+        Button startBtn = (Button) (translateFlowPane).lookup("#startBtn");
+        Button resetBtn = (Button) (translateFlowPane).lookup("#resetBtn");
+        javafx.scene.control.TextField browseTextfield = (TextField) (translateFlowPane).lookup("#filepathTextView");
         ScrollPane sp = new ScrollPane();
-        sp.setContent(flowPane);
-        flowPane.setVgap(5);
-        flowPane.setHgap(20);
+        sp.setContent(translateFlowPane);
+        translateFlowPane.setVgap(5);
+        translateFlowPane.setHgap(20);
 
 
         browseBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -71,7 +157,7 @@ public class Main extends Application {
                         sheetToTranslateMap.get(sheet).languages = new ArrayList<String>();
                     }
                     for (String sheet: sheetsAndLanguages.keySet()) {
-                        sheetsAndLanguagesUI(sheet, sheetsAndLanguages.get(sheet),flowPane, primaryStage);
+                        sheetsAndLanguagesUI(sheet, sheetsAndLanguages.get(sheet),translateFlowPane, primaryStage);
                     }
 
                     startBtn.setDisable(true);
@@ -130,7 +216,7 @@ public class Main extends Application {
                     sp.setContent(pane);
                     sp.setFitToHeight(true);
                     sp.setFitToWidth(true);
-                    flowPane.getChildren().add(sp);
+                    translateFlowPane.getChildren().add(sp);
 
 
 
