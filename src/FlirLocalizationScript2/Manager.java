@@ -162,7 +162,15 @@ public class Manager {
         for (int i = 0; i < stringNode.getLength(); i++) {
             String key = stringNode.item(i).getAttributes().getNamedItem("name").getNodeValue();
             String newValue = translatedStringsMap.get(key);
-            if (newValue != null && !newValue.equals("")) {
+            if (stringNode.item(i).getFirstChild() !=null && stringNode.item(i).getFirstChild().getNodeName().contains("#cdata")) {
+                if (newValue.contains("CDATA")) {
+                    stringNode.item(i).getFirstChild().setTextContent(newValue.substring(9, newValue.length() - 3));
+                }
+                else {
+                    stringNode.item(i).getFirstChild().setTextContent(newValue);
+                }
+            }
+            else if (newValue != null && !newValue.equals("")) {
                 stringNode.item(i).setTextContent(StringEscapeUtils.unescapeXml(newValue)); //TODO test it!
             }
             englishStringsMap.put(key, stringNode.item(i).getTextContent());
